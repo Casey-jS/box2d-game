@@ -1,5 +1,6 @@
 import os
-import pygame
+import pygame as pg
+import sys
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -17,15 +18,21 @@ class Engine:
         self.pg_init()
 
     def pg_init(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption(self.title)
-        self.clock = pygame.time.Clock()
-        self.last_time_checked = pygame.time.get_ticks()
-        pygame.key.set_repeat(500) # set repeat delay for key presses
+        pg.init()
+        self.screen = pg.display.set_mode((self.width, self.height))
+        pg.display.set_caption(self.title)
+        self.clock = pg.time.Clock()
+        self.last_time_checked = pg.time.get_ticks()
+        pg.key.set_repeat(500) # set repeat delay for key presses
         self.paused = False
-        self.background = None
 
     def run(self):
         self.running = True
+        while self.running:
+            
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+
 
