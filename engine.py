@@ -1,6 +1,10 @@
 import os
 import pygame as pg
 import sys
+import scene as s
+import game_object as go
+
+FPS = 60
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -16,11 +20,12 @@ class Engine:
         self.width = width
         self.height = height
         self.pg_init()
+        self.scene = None
 
     def pg_init(self):
         pg.init()
-        self.screen = pg.display.set_mode((self.width, self.height))
-        pg.display.set_caption(self.title)
+        self.screen = pg.display.set_mode((self.width, self.height)) # set screen
+        pg.display.set_caption(self.title) # screen caption
         self.clock = pg.time.Clock()
         self.last_time_checked = pg.time.get_ticks()
         pg.key.set_repeat(500) # set repeat delay for key presses
@@ -34,5 +39,18 @@ class Engine:
                 if event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
+
+            self.scene.update()
+
+            self.screen.fill((255, 255, 255))
+            self.scene.draw(self.screen)
+            pg.display.flip()
+
+            self.delta = pg.time.get_ticks() - self.last_time_checked
+            self.clock.tick(FPS)
+            self.last_time_checked = pg.time.get_ticks()
+        
+        pg.quit()
+        sys.exit()
 
 
