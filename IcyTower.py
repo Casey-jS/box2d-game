@@ -12,30 +12,31 @@ class Player(GameObject):
     def __init__(self, world, x=768/2, y=400):
         super().__init__(x, y)
         self.speed = 1000
-        self.jump_force = -10000
-        
-        self.body = world.CreateDynamicBody(
-            position = (x, y),
-            fixedRotation = True
-        )
-        shape = Box2D.b2PolygonShape(box=(1, 1))
-        
-        fixture = Box2D.b2FixtureDef(
-            shape = shape,
-            friction = 0.3,
-            restitution = 0.3,
-            density = 0.5
-        )
-
-        fixture.userData = "player"
-
-        box = self.body.CreateFixture(fixture)
+        self.jump_force = -25000
 
         image: pg.Surface = pg.image.load("default.png").convert_alpha()
         self.image = pg.transform.scale(image, (100, 100))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        self.world = world
+        self.body = self.world.CreateDynamicBody(position=(self.rect.x, self.rect.y))
+        
+        self.shape = Box2D.b2PolygonShape()
+        self.shape.SetAsBox(self.rect.width / 2 * meters_to_pixels, self.rect.height / 2 * meters_to_pixels)
+        
+        self.fixture = self.body.CreateFixture(shape=self.shape, density=1, friction=0.3, restitution=0.1)
+        
+        self.body = world.CreateDynamicBody(
+            position = (x, y),
+            fixedRotation = True
+        )
+        
+
+
+        
+        
 
     def update(self):
 
