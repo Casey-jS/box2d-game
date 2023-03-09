@@ -15,14 +15,13 @@ class Engine:
         self.width = width
         self.height = height
         self.delta = 0
-        self.paused = False
-        self.world = b2World(gravity=(0, 400), doSleep=False)
+        self.world = b2World(gravity=(0, 100), doSleep=False)
         self.scene = None
+        self.events = None
         self.pg_init()
 
     def pg_init(self):
         pg.init()
-        pg.key.set_repeat(500)
         self.screen = pg.display.set_mode((self.width, self.height))
         pg.display.set_caption(self.title)
         self.clock = pg.time.Clock()
@@ -37,13 +36,14 @@ class Engine:
         self.running = True
         while self.running:
 
+            self.events = pg.key.get_pressed()
+
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
-            self.world.Step(1.0 / 60, 6, 2)
-            self.world.ClearForces()
-            self.scene.update()
+            self.world.Step(1.0 / 120, 6, 2)
+            self.scene.update(self.events)
             
             self.screen.fill((255, 255, 255))
             self.scene.draw(self.screen)

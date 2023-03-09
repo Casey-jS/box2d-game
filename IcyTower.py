@@ -7,51 +7,50 @@ import Box2D
 pixels_to_meters = 1/100
 meters_to_pixels = 100
 
+PLAYER_SIZE = 100
+
 class Player(GameObject):
 
-    def __init__(self, world, x=768/2, y=400):
-        super().__init__(x, y)
-        self.speed = 1000
-        self.jump_force = -25000
+    def __init__(self, world):
+        super().__init__(x=768/2, y=400, world=world, image="default.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
+        self.speed = 10  # lower speed for smoother momentum
+        self.jump_force = -2500
+        self.velocity = Box2D.b2Vec2(0, 0)
+        self.colliding = False
 
-        image: pg.Surface = pg.image.load("default.png").convert_alpha()
-        self.image = pg.transform.scale(image, (100, 100))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+    def set_colliding(self, colliding):
+        self.colliding = colliding
+        print("Player.colliding set to " + str(self.colliding))
+    def update(self, events):
+        self.velocity = self.body.linearVelocity
+        
+        # update velocity based on keys pressed
+        if events[pg.K_a]:
+            self.velocity -= Box2D.b2Vec2(self.speed, 0)
+        if events[pg.K_d]:
+            self.velocity += Box2D.b2Vec2(self.speed, 0)
+        
+        if events[pg.K_SPACE]:
+            self.velocity += Box2D.b2Vec2(0, self.jump_force)
 
-        self.world = world
-        self.body = self.world.CreateDynamicBody(position=(self.rect.x, self.rect.y))
-        
-        self.shape = Box2D.b2PolygonShape()
-        self.shape.SetAsBox(self.rect.width / 2 * meters_to_pixels, self.rect.height / 2 * meters_to_pixels)
-        
-        self.fixture = self.body.CreateFixture(shape=self.shape, density=1, friction=0.3, restitution=0.1)
-        
-        self.body = world.CreateDynamicBody(
-            position = (x, y),
-            fixedRotation = True
-        )
-        
+        # apply velocity to body
+        self.body.linearVelocity = self.velocity
 
+        if self.x < 0:
+            self.velocity.x = abs(self.velocity.x)  # reverse x velocity
+        elif self.x > 1024 - PLAYER_SIZE:
+            self.velocity.x = -abs(self.velocity.x)
 
-        
-        
-
-    def update(self):
-
-        keys = pg.key.get_pressed()
-        
-        if keys[pg.K_a]: 
-            self.body.ApplyForce(Box2D.b2Vec2(-self.speed, 0), self.body.worldCenter, True)
-            
-        if keys[pg.K_d]: 
-            self.body.ApplyForce(Box2D.b2Vec2(self.speed, 0), self.body.worldCenter, True)
-              
-        if keys[pg.K_SPACE]:
-            self.body.ApplyLinearImpulse((0, self.jump_force), self.body.position, True)
-        self.x, self.y = self.body.position    
+        self.x, self.y = self.body.position
         self.rect.x, self.rect.y = self.x, self.y
+
+
+class Ground(GameObject):
+    def __init__(self, world):
+        super().__init__(x = 0, y = 668, world=world, image=None, width = 1024, height = 50, type = "static")  
+        print("Rect.x: ", self.rect.x)  
+        print("Rect.y: ", self.rect.y)  
+
         
 
 def main():
@@ -59,10 +58,11 @@ def main():
     engine = Engine("Icy Tower")
 
     player = Player(engine.world)
-    level = Scene(engine)
+    ground = Ground(engine.world)
+    level = Scene(engine, player)
 
-
-    level.add_object(player)
+    
+    level.add_object(ground)
     engine.set_scene(level)
     engine.run()
 
