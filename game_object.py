@@ -20,14 +20,13 @@ class GameObject(pg.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
-        if not image:
-            image_temp = pg.Surface((width, height))
-            image_temp.fill((0, 0, 0))
-            self.image = image_temp
-        else:
-            image_temp = pg.image.load(image).convert_alpha()
-            self.image = pg.transform.scale(image_temp, (width, height))
-        self.rect = self.image.get_rect().clip(pg.Rect(self.image.get_bounding_rect())) # rect is 100px by 100px
+        
+        image_temp = pg.image.load(image).convert_alpha()
+        self.image = pg.transform.scale(image_temp, (width, height))
+        print(self.image.get_width())
+        
+        self.rect = self.image.get_rect()
+        print(self.rect.width)
         self.rect.x = x
         self.rect.y = y
 

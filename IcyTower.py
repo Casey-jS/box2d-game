@@ -18,14 +18,38 @@ class Player(GameObject):
         self.ground_speed = .15
         self.air_speed = .3
         self.current_speed = self.air_speed
-        self.jump_force = -1
+        self.jump_force = -1.25
         self.velocity = Box2D.b2Vec2(0, 0)
         self.on_surface = False
+        self.current_platform = None
+
+    def collision_occurred(self, platform):
+        player_right = self.rect.right
+        player_left = self.rect.left
+        player_bottom = self.rect.bottom
+        
+        platform_right = platform.rect.right
+        platform_left = platform.rect.left
+        platform_bottom = platform.rect.bottom
+        
+        # TODO: Modify these values for more precise collision
+        if player_bottom > platform_bottom:
+            return
+        
+        # if the player is within the x bounds of the platform
+        if player_right < platform_right and player_left > platform_left:
+            self.current_platform = platform
+            self.last_y = platform.rect.top - 1 # -1 so the player doesnt continuously collide
+            self.velocity.y = 0
+            self.on_ground()
+
         
     def update(self, events):
         self.velocity = self.body.linearVelocity
 
-        self.check_collisions()
+        self.check_wall_collisions()
+        if self.current_platform:
+            self.check_fall()
         self.handle_inputs(events)
 
         # apply velocity to body
@@ -33,6 +57,18 @@ class Player(GameObject):
 
         self.x, self.y = self.body.position * meters_to_pixels
         self.rect.x, self.rect.y = self.x, self.y
+
+    def check_fall(self):
+        player_right = self.rect.right
+        player_left = self.rect.left
+        
+        platform_right = self.current_platform.rect.right
+        platform_left = self.current_platform.rect.left
+
+        if player_left > platform_right or player_right < platform_left:
+            self.on_surface = False
+            self.current_platform = None
+            self.body.gravityScale = 1.0
 
     def on_ground(self):
         self.on_surface = True
@@ -52,11 +88,12 @@ class Player(GameObject):
             self.on_surface = False
             self.current_speed = self.air_speed
             self.body.ApplyLinearImpulse(Box2D.b2Vec2(0, self.jump_force), self.body.position, True)
+            self.current_platform = None
             self.body.gravityScale = 1.0
 
     
 
-    def check_collisions(self):
+    def check_wall_collisions(self):
 
         #if the player is on the bottom of the screen
         if self.y > 768 - PLAYER_SIZE:
@@ -72,7 +109,7 @@ class Player(GameObject):
 
 class Platform(GameObject):
     def __init__(self, x, y, world):
-        super().__init__(x, y, world=world, image="assets/platform.png", width = PLATFORM_WIDTH, height = 80, type = "static")  
+        super().__init__(x, y, world=world, image="assets/platform.png", width = PLATFORM_WIDTH, height = 40, type = "static")  
 
 
 def generate_platform(y, world):
