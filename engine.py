@@ -3,7 +3,7 @@ import pygame as pg
 import sys
 from Box2D import b2World
 
-FPS = 60
+FPS = 120
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -15,7 +15,7 @@ class Engine:
         self.width = width
         self.height = height
         self.delta = 0
-        self.world = b2World(gravity=(0, 100), doSleep=False)
+        self.world = b2World(gravity=(0, 10), doSleep=False)
         self.scene = None
         self.events = None
         self.pg_init()
@@ -25,7 +25,6 @@ class Engine:
         self.screen = pg.display.set_mode((self.width, self.height))
         pg.display.set_caption(self.title)
         self.clock = pg.time.Clock()
-        self.last_time_checked = pg.time.get_ticks()
         pg.key.set_repeat(500)
 
     def set_scene(self, scene):
@@ -33,25 +32,32 @@ class Engine:
 
 
     def run(self):
+
+        time_step = 1 / FPS
+        accumulated_time = 0
         self.running = True
         while self.running:
 
-            self.events = pg.key.get_pressed()
+            self.delta = self.clock.tick(FPS) / 1000.0
+            accumulated_time += self.delta
 
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    pg.quit()
-                    sys.exit()
-            self.world.Step(1.0 / 120, 6, 2)
-            self.scene.update(self.events)
-            
+            while accumulated_time >= time_step:
+                self.events = pg.key.get_pressed()
+
+                for event in pg.event.get():
+                    if event.type == pg.QUIT:
+                        pg.quit()
+                        sys.exit()
+                self.world.ClearForces()
+                self.scene.update(self.events)
+                accumulated_time -= time_step
+
+            self.world.Step(time_step, 6, 2)
             self.screen.fill((255, 255, 255))
             self.scene.draw(self.screen)
             pg.display.flip()
-
-            self.delta = pg.time.get_ticks() - self.last_time_checked
             self.clock.tick(FPS)
-            self.last_time_checked = pg.time.get_ticks()
+            
         
         pg.quit()
         sys.exit()

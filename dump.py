@@ -4,6 +4,7 @@ import sys
 import Box2D
 from abc import abstractmethod
 
+
 FPS = 60
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -16,59 +17,69 @@ class Engine:
         self.width = width
         self.height = height
         self.delta = 0
-        self.paused = False
-        self.world = Box2D.b2World(gravity=(0, -10))
+        self.world = Box2D.b2World(gravity=(0, 1000), doSleep=False)
         self.scene = None
-        self._init_pygame()
+        self.events = None
+        self.pg_init()
 
-
-    def run(self):
-
-        while True:
-            self._handle_events()
-            self._game_loop()
-            pg.display.flip()
-            self._update_delta()
-
-    def set_scene(self, scene):
-        self.scene = scene
-
-    def _init_pygame(self):
+    def pg_init(self):
         pg.init()
-        pg.key.set_repeat(500)
         self.screen = pg.display.set_mode((self.width, self.height))
         pg.display.set_caption(self.title)
         self.clock = pg.time.Clock()
         self.last_time_checked = pg.time.get_ticks()
+        pg.key.set_repeat(500)
+
+    def set_scene(self, scene):
+        self.scene = scene
 
 
-    def _handle_events(self):
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
+    def run(self):
+        self.running = True
+        while self.running:
 
-    def _game_loop(self):
-        if not self.paused:
-            if self.scene:
-                self.scene.update()
-                self.world.Step(self.delta_seconds, 6, 2)
+            self.events = pg.key.get_pressed()
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+            self.world.Step(1.0 / 120, 6, 2)
+            self.world.ClearForces()
+            self.scene.update(self.events)
+            
             self.screen.fill((255, 255, 255))
-            if self.scene:
-                self.scene.draw(self.screen)
+            self.scene.draw(self.screen)
+            pg.display.flip()
 
-    def _update_delta(self):
-        now = pg.time.get_ticks()
-        self.delta = now - self.last_time_checked
-        self.last_time_checked = now
+            self.delta = pg.time.get_ticks() - self.last_time_checked
+            self.clock.tick(FPS)
+            self.last_time_checked = pg.time.get_ticks()
+        
+        pg.quit()
+        sys.exit()
 
-    @property
-    def delta_seconds(self):
-        return self.delta / 1000.0
+      
+class Scene:
 
-    @property
-    def events(self):
-        return pg.event.get()
+    def __init__(self, engine, player):
+        self.objects = []
+        self.player = player
+        self.sprites = pg.sprite.Group()
+
+    def add_object(self, object):
+        self.objects.append(object)
+
+    def update(self, events):
+        for obj in self.objects:
+            obj.update(events)
+        self.player.update(events)
+        
+
+    def draw(self, window):
+        self.player.draw(window)
+        for obj in self.objects:
+            obj.draw(window)
 
 
 
@@ -81,93 +92,114 @@ GameObject
 - Speed
 '''
 
+meters_to_pixels = 100
+pixels_to_meters = 1/100
+
 class GameObject(pg.sprite.Sprite):
 
-    def __init__(self, x, y, world, image="default.png", speed=10):
+    def __init__(self, x, y, world, image, width, height, type):
         super().__init__()
         self.x = x
         self.y = y
-        self.speed = speed
-
-        self.image: pg.Surface = pg.image.load(image).convert_alpha()
-        self.rect = self.image.get_rect()
+        if not image:
+            image_temp = pg.Surface((width, height))
+            image_temp.fill((0, 0, 0))
+            self.image = image_temp
+        else:
+            image_temp = pg.image.load(image).convert_alpha()
+            self.image = pg.transform.scale(image_temp, (width, height))
+        self.rect = self.image.get_rect() # rect is 100px by 100px
         self.rect.x = x
         self.rect.y = y
+
+        self.world = world
+
+        if type == "dynamic":
+            self.body = self.world.CreateDynamicBody(position=(self.rect.x, self.rect.y), fixedRotation=True)
+        else:
+            self.body = self.world.CreateStaticBody(position=(self.rect.x, self.rect.y), fixedRotation=True)
+        print(self.body.mass)
+        self.shape = Box2D.b2PolygonShape()
+        self.shape.SetAsBox(self.rect.width / 2 * pixels_to_meters, self.rect.height / 2 * pixels_to_meters)
+        
+        self.fixture = self.body.CreateFixture(shape=self.shape, density=.5, friction=0.3, restitution=0.5)
+    
+    
+
 
 
     def draw(self, window):
         window.blit(self.image, self.rect)
 
     @abstractmethod
-    def update(self):
+    def update(self, events):
         pass
 
-class Scene:
 
-    def __init__(self, engine):
-        self.objects = []
+pixels_to_meters = 1/100
+meters_to_pixels = 100
 
-    def add_object(self, object):
-        self.objects.append(object)
-
-    def update(self):
-        for obj in self.objects:
-            obj.update()
-
-    def draw(self, window):
-        for obj in self.objects:
-            obj.draw(window)
-
-
-
-
-w2b = 1/100
-b2w = 100
-gravity = Box2D.b2Vec2(0.5, -10.0)
-world = Box2D.b2World(gravity,doSleep=False)
-
+PLAYER_SIZE = 100
 
 class Player(GameObject):
 
-    def __init__(self, world, x=768/2, y=400):
-        super().__init__(x, y, world)
-        self.speed = 100
-        self.jump_force = 10
+    def __init__(self, world):
+        super().__init__(x=768/2, y=400, world=world, image="default.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
+        self.speed = 10 # lower speed for smoother momentum
+        self.jump_force = -250
+        self.velocity = Box2D.b2Vec2(0, 0)
+        self.on_ground = False
         
-        self.body = world.CreateDynamicBody(
-            position = (x, y),
-            fixedRotation = True
-        )
-        self.fixture = self.body.CreatePolygonFixture(
-            box = (1, 1),
-            density = 1,
-            friction = 0.3,
-            restitution = 0.0
-        )
+    def update(self, events):
+        self.velocity = self.body.linearVelocity
+
+        self.check_walls()
+        # update velocity based on keys pressed
+        if events[pg.K_a]:
+            self.velocity -= Box2D.b2Vec2(self.speed, 0)
+        if events[pg.K_d]:
+            self.velocity += Box2D.b2Vec2(self.speed, 0)
+        
+        if events[pg.K_SPACE]:
+            self.body.ApplyForceToCenter(Box2D.b2Vec2(0, self.jump_force), True)
+            print("Rect.x: ", self.rect.x)
+            print("Self.x: ", self.x)
+            print("Position.x: ", self.body.position.x)
 
 
-    def update(self):
+        
 
-        keys = pg.key.get_pressed()
+        # apply velocity to body
+        self.body.linearVelocity = self.velocity
 
-        if keys[pg.K_a]: self.body.ApplyForce((-self.speed, 0), self.body.worldCenter, True)
-        
-        if keys[pg.K_d]: self.body.ApplyForce((self.speed, 0), self.body.worldCenter, True)
-        
-        if keys[pg.K_SPACE]:
-            print("Jumping")
-            self.body.ApplyLinearImpulse((0, self.jump_force), self.body.worldCenter, True)
-            print(self.body.position)
-        self.rect.x, self.rect.y = self.body.position
-        self.x = self.rect.x
-        self.y = self.rect.y
-        
+        self.x, self.y = self.body.position * meters_to_pixels
+        self.rect.x, self.rect.y = self.x, self.y
+
+    def check_walls(self):
+        if self.y > 768 - PLAYER_SIZE:
+            self.y = 768 - PLAYER_SIZE
+            self.body.position = (self.x, self.y)
+            self.velocity.y = 0
+            self.on_ground = True
+        if self.x < 0:
+            self.velocity.x = abs(self.velocity.x)  # reverse x velocity
+        elif self.x > 1024 - PLAYER_SIZE:
+            self.velocity.x = -abs(self.velocity.x)
+
+class Ground(GameObject):
+    def __init__(self, world):
+        super().__init__(x = 0, y = 668, world=world, image=None, width = 1024, height = 50, type = "static")  
 
 def main():
+
     engine = Engine("Icy Tower")
-    player = Player(world)
-    level = Scene(engine)
-    level.add_object(player)
+
+    player = Player(engine.world)
+    #ground = Ground(engine.world)
+    level = Scene(engine, player)
+
+    
+    #level.add_object(ground)
     engine.set_scene(level)
     engine.run()
 

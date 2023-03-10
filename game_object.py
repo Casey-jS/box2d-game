@@ -34,14 +34,15 @@ class GameObject(pg.sprite.Sprite):
         self.world = world
 
         if type == "dynamic":
-            self.body = self.world.CreateDynamicBody(position=(self.rect.x, self.rect.y), fixedRotation=True)
+            self.body = self.world.CreateDynamicBody(position=(self.rect.x * pixels_to_meters, self.rect.y * pixels_to_meters), fixedRotation=True)
         else:
             self.body = self.world.CreateStaticBody(position=(self.rect.x, self.rect.y), fixedRotation=True)
         print(self.body.mass)
         self.shape = Box2D.b2PolygonShape()
         self.shape.SetAsBox(self.rect.width / 2 * pixels_to_meters, self.rect.height / 2 * pixels_to_meters)
         
-        self.fixture = self.body.CreateFixture(shape=self.shape, density=.5, friction=0.3, restitution=0.5)
+        self.fixture = self.body.CreateFixture(shape=self.shape, density=.1, friction=0.3, restitution=0.5)
+        print("Fixture: ", self.fixture.shape)
     
     
 
