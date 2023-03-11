@@ -13,11 +13,6 @@ class Platform(GameObject):
         super().__init__(x, y, world=world, image="assets/platform.png", width = PLATFORM_WIDTH, height = 40, type = "static")  
 
 
-def generate_platform(y, world):
-    x = random.randint(0, 1024 - PLATFORM_WIDTH)
-    p = Platform(x, y, world)
-    return p
-
 def main():
 
     engine = Engine("Icy Tower")
@@ -25,10 +20,25 @@ def main():
     player = Player(engine.world)
     level = Scene(engine, player)
 
-    platform_heights = [628, 528, 428, 328, 228, 128, 28]
-    for h in platform_heights:
-        p = generate_platform(h, engine.world)
-        level.add_object(p)
+    prev_position = -100000
+
+    # the height that the platforms will spawn at. start at 628
+    start = 628
+
+    # generate platforms
+    for i in range(30):
+
+        while True:
+            x = random.randint(0, 1024 - PLATFORM_WIDTH)
+
+            # to prevent subsequent platforms from spawning too close
+            if abs(prev_position - x) <= 200:
+                continue
+            p = Platform(x, start - i*200, engine.world)
+            prev_position = x
+            level.add_object(p)
+            break
+
     
     engine.set_scene(level)
     engine.run()

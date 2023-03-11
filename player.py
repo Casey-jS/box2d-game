@@ -12,11 +12,11 @@ PLAYER_SIZE = 100 # Player will be 1m X 1m
 class Player(GameObject):
 
     def __init__(self, world):
-        super().__init__(x=768/2, y=600, world=world, image="assets/default.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
+        super().__init__(x=768/2 + PLAYER_SIZE, y=600, world=world, image="assets/default.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
         self.ground_speed = .15
-        self.air_speed = .3
+        self.air_speed = .5
         self.current_speed = self.air_speed
-        self.jump_force = -1.5
+        self.jump_force = -2.5
         self.velocity = Box2D.b2Vec2(0, 0)
         self.on_surface = False
         self.current_platform = None
