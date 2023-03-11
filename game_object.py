@@ -45,8 +45,10 @@ class GameObject(pg.sprite.Sprite):
 
 
 
-    def draw(self, window):
-        window.blit(self.image, self.rect)
+    def draw(self, window, engine):
+        image_x = self.rect.x + engine.scene.camera_offset[0]
+        image_y = self.rect.y + engine.scene.camera_offset[1]
+        window.blit(self.image, (image_x, image_y))
 
     @abstractmethod
     def update(self, events):
