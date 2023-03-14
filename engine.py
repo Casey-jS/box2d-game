@@ -15,7 +15,7 @@ class Engine:
         self.width = width
         self.height = height
         self.delta = 0
-        self.world = b2World(gravity=(0, 30), doSleep=False)
+        self.world = b2World(gravity=(0, 40), doSleep=False)
         self.scene = None
         self.events = None
         self.pg_init()

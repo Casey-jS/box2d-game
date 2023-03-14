@@ -1,5 +1,5 @@
 import pygame as pg
-import Box2D
+from Box2D import b2PolygonShape
 
 from abc import abstractmethod
 
@@ -23,10 +23,8 @@ class GameObject(pg.sprite.Sprite):
         
         image_temp = pg.image.load(image).convert_alpha()
         self.image = pg.transform.scale(image_temp, (width, height))
-        print(self.image.get_width())
         
         self.rect = self.image.get_rect()
-        print(self.rect.width)
         self.rect.x = x
         self.rect.y = y
 
@@ -36,10 +34,10 @@ class GameObject(pg.sprite.Sprite):
             self.body = self.world.CreateDynamicBody(position=(self.rect.x * pixels_to_meters, self.rect.y * pixels_to_meters), fixedRotation=True)
         else:
             self.body = self.world.CreateStaticBody(position=(self.rect.x, self.rect.y), fixedRotation=True)
-        self.shape = Box2D.b2PolygonShape()
+        self.shape = b2PolygonShape()
         self.shape.SetAsBox(self.rect.width / 2 * pixels_to_meters, self.rect.height / 2 * pixels_to_meters)
         
-        self.fixture = self.body.CreateFixture(shape=self.shape, density=.1, friction=0.3, restitution=0.5)
+        self.fixture = self.body.CreateFixture(shape=self.shape, density=.3, friction=0.3, restitution=0.5)
     
     
 
