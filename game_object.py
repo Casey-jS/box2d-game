@@ -1,5 +1,5 @@
 import pygame as pg
-from Box2D import b2PolygonShape
+from Box2D import b2PolygonShape, b2World
 
 from abc import abstractmethod
 
@@ -16,11 +16,10 @@ pixels_to_meters = 1/100
 
 class GameObject(pg.sprite.Sprite):
 
-    def __init__(self, x, y, world, image, width, height, type):
+    def __init__(self, x, y, world: b2World, image: pg.image, width, height, type):
         super().__init__()
         self.x = x
         self.y = y
-        
         image_temp = pg.image.load(image).convert_alpha()
         self.image = pg.transform.scale(image_temp, (width, height))
         
@@ -39,15 +38,11 @@ class GameObject(pg.sprite.Sprite):
         
         self.fixture = self.body.CreateFixture(shape=self.shape, density=.3, friction=0.3, restitution=0.5)
     
-    
-
-
-
     def draw(self, window, engine):
 
         # draw everything based on camera offset
-        image_x = self.rect.x + engine.scene.camera_offset[0]
-        image_y = self.rect.y + engine.scene.camera_offset[1]
+        image_x = self.rect.x
+        image_y = self.rect.y + engine.scene.camera_offset_y
         window.blit(self.image, (image_x, image_y))
 
     @abstractmethod

@@ -3,8 +3,11 @@ from game_object import GameObject
 from scene import Scene
 import random
 from player import Player
+import pygame as pg
 
 PLATFORM_WIDTH = 200
+
+
 
 class IcyTower:
 

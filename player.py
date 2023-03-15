@@ -2,19 +2,20 @@ from game_object import GameObject
 from Box2D import b2Vec2
 import pygame as pg
 from scene import Message
+import sys
 
 
 pixels_to_meters = 1/100
 meters_to_pixels = 100
 
-PLAYER_SIZE = 50 # Player will be 1m X 1m
+PLAYER_SIZE = 50 # Player will be .5m X .5m
 
 class Player(GameObject):
 
     def __init__(self, world, scene = None):
         super().__init__(x=768/2 + PLAYER_SIZE, y=200, world=world, image="assets/player-right.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
         self.ground_speed = .1
-        self.air_speed = .15
+        self.air_speed = .4
         self.current_speed = self.air_speed
         self.jump_force = -3
         self.velocity = b2Vec2(0, 0)
@@ -52,6 +53,9 @@ class Player(GameObject):
     # updates rect and body positions
     def update(self, events):
 
+        if self.y > self.scene.screen_bottom:
+            sys.exit()
+
         self.velocity = self.body.linearVelocity
 
         self.check_platform_collisions()
@@ -66,6 +70,8 @@ class Player(GameObject):
 
         self.x, self.y = self.body.position * meters_to_pixels
         self.rect.x, self.rect.y = self.x, self.y
+
+        
 
     def check_fall(self):
         player_right = self.rect.right
