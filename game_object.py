@@ -1,15 +1,6 @@
 import pygame as pg
 from Box2D import b2PolygonShape, b2World
-
 from abc import abstractmethod
-
-'''
-GameObject
-- Position (x, y)
-- Image
-- Rectangle
-- Speed
-'''
 
 meters_to_pixels = 100
 pixels_to_meters = 1/100
@@ -38,11 +29,10 @@ class GameObject(pg.sprite.Sprite):
         
         self.fixture = self.body.CreateFixture(shape=self.shape, density=.3, friction=0.3, restitution=0.5)
     
-    def draw(self, window, engine):
-
+    def draw(self, window, scene):
         # draw everything based on camera offset
         image_x = self.rect.x
-        image_y = self.rect.y + engine.scene.camera_offset_y
+        image_y = self.rect.y + scene.camera_offset_y
         window.blit(self.image, (image_x, image_y))
 
     @abstractmethod

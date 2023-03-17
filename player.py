@@ -8,21 +8,25 @@ import sys
 pixels_to_meters = 1/100
 meters_to_pixels = 100
 
+MAX_HEIGHT = 628 - (200 * 100)
+
 PLAYER_SIZE = 50 # Player will be .5m X .5m
 
 class Player(GameObject):
 
-    def __init__(self, world, scene = None):
-        super().__init__(x=768/2 + PLAYER_SIZE, y=200, world=world, image="assets/player-right.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
+    def __init__(self, world, game, scene = None):
+        super().__init__(x=0, y=200, world=world, image="assets/player-right.png", width=PLAYER_SIZE, height=PLAYER_SIZE, type = "dynamic")
         self.ground_speed = .1
         self.air_speed = .4
         self.current_speed = self.air_speed
-        self.jump_force = -3
+        self.jump_force = -2
         self.velocity = b2Vec2(0, 0)
         self.on_surface = False
         self.current_platform = None
         self.scene = scene
         self.time_on_platform = 0
+        self.game = game
+        self.max_height = 10
 
     def collision_occurred(self, platform):
         player_right = self.rect.right
@@ -54,7 +58,13 @@ class Player(GameObject):
     def update(self, events):
 
         if self.y > self.scene.screen_bottom:
-            sys.exit()
+            self.game.set_score(self.max_height)
+            self.scene.engine.set_running(False)
+
+        if self.y < MAX_HEIGHT:
+            self.game.set_score(self.max_height)
+            self.scene.engine.set_running(False)
+            self.game.win = True
 
         self.velocity = self.body.linearVelocity
 
@@ -71,8 +81,11 @@ class Player(GameObject):
         self.x, self.y = self.body.position * meters_to_pixels
         self.rect.x, self.rect.y = self.x, self.y
 
+        if self.velocity.y < 0:
+            self.max_height = int(abs(self.rect.y / 10))
         
-
+        self.scene.text.update("Score: " + str(self.max_height))
+        
     def check_fall(self):
         player_right = self.rect.right
         player_left = self.rect.left
@@ -112,20 +125,20 @@ class Player(GameObject):
             self.body.gravityScale = 1.0
 
     def nice_jump(self):
-        msg = Message("assets/nice.png", 750, 10, 100, 270, 30)
+        msg = Message("assets/nice.png", 550, 10, 100, 270, 30)
         self.scene.message = msg
-        self.jump_force += -.25 # increase the jump force for combo'd good timing jumps
+        self.jump_force += -.15 # increase the jump force for combo'd good timing jumps
 
     def check_wall_collisions(self):
 
         #if the player is on the bottom of the screen
-        if self.y > 768 - PLAYER_SIZE:
+        if self.y > self.scene.engine.height - PLAYER_SIZE:
             self.on_ground()
-            self.y = 768 - PLAYER_SIZE - 1 # - 1 so the player doesn't continue to collide with the ground
+            self.y = self.scene.engine.height - PLAYER_SIZE - 1 # - 1 so the player doesn't continue to collide with the ground
             self.body.position = (self.x * pixels_to_meters, self.y * pixels_to_meters)
             self.velocity.y = 0
 
         if self.x < 0:
             self.velocity.x = abs(self.velocity.x)  # reverse x velocity
-        elif self.x > 1024 - PLAYER_SIZE:
+        elif self.x > self.scene.engine.width - PLAYER_SIZE:
             self.velocity.x = -abs(self.velocity.x)
