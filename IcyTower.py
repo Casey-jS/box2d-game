@@ -5,8 +5,7 @@ import random
 from player import Player
 import sys
 import pygame as pg
-from pygame import mixer
-
+from pygame import mixer, Rect, display, font
 
 PLATFORM_WIDTH = 150
 
@@ -80,7 +79,7 @@ class IcyTower:
 
     def game_over(self):
         pg.init()
-        win = pg.display.set_mode((400, 600))
+        win = display.set_mode((400, 600))
         pg.display.set_caption("Game Over")
         win.fill((0, 0, 0))
         font = pg.font.Font(None, 40)
@@ -102,10 +101,10 @@ class IcyTower:
         win.blit(go_text, go_rect)
         win.blit(score_text, score_rect)
 
-        exit_button = pg.Rect(0, 200, 100, 50)
+        exit_button = Rect(0, 200, 100, 50)
         exit_button.centerx = win.get_rect().centerx
 
-        new_game_button = pg.Rect(0, 300, 140, 60)
+        new_game_button = Rect(0, 300, 140, 60)
         new_game_button.centerx = win.get_rect().centerx
 
         exit_text = font.render("Exit", True, (0, 0, 0))
